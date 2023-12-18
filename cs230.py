@@ -102,42 +102,39 @@ def displayStations(stations, route=None):
         filled=True,
         get_radius=5,
         radius_scale=6,
-        get_fill_color=[0, 0, 255, 255],
+        get_fill_color=[0, 0, 255, 255],  # Red color for stations
         pickable=True,
         auto_highlight=True,
         get_line_color=[0, 0, 0],
         picking_radius=10,
     )
-    if route:
-        routelayer = pdk.Layer(
-            "LineLayer",
-            data=route,
-            get_source_position=['start lon','start lat'][0],
-            get_target_position=['end lon','end lat'][0],
-            get_color=[0, 0, 255, 255],
-            pickable=True,
-            auto_highlight=True,
-            get_width=5,
-            width_scale=5,
-            picking_radius=10,
-        )
-    else:
-        routeLayer= pdk.Layer()
+    
+    routelayer = pdk.Layer(
+        "LineLayer",
+        data=route,
+        get_source_position=['start lon','start lat'],
+        get_target_position=['end lon','end lat'],
+        get_color=[0, 0, 255, 255],
+        pickable=True,
+        auto_highlight=True,
+        get_width=5,
+        width_scale=5,
+        picking_radius=10,
+    )
     
     viewstate = pdk.ViewState(
         latitude=centerlat,
         longitude=centerlon,
-        zoom=12,
+        zoom=11,
         pitch=0
     )
     
     deck = pdk.Deck(
-        layers=[stationlayer,route]  ,
+        layers=[stationlayer, routelayer],
         initial_view_state=viewstate,
         map_style="mapbox://styles/mapbox/light-v9"
     )
     st.pydeck_chart(deck)
-    st.markdown('This map shows all the Blue Bike stations by January of 2015. There are a lot of stations scattered in Cambridge along the Charles River.')
     
     popstart = route['start station name'][0]
     popend = route['end station name'][0]
