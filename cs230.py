@@ -90,7 +90,7 @@ def calcDistance(lat1, lon1, lat2, lon2):
 
     return distance
 
-def displayStations(stations, route):
+def displayStations(stations, route=None):
     st.subheader('Bike Stations Map') 
     centerlat = stations['Lat'].mean()
     centerlon = stations['Lon'].mean()
@@ -108,19 +108,21 @@ def displayStations(stations, route):
         get_line_color=[0, 0, 0],
         picking_radius=10,
     )
-    
-    routelayer = pdk.Layer(
-        "LineLayer",
-        data=route,
-        get_source_position=['start lon','start lat'][0],
-        get_target_position=['end lon','end lat'][0],
-        get_color=[0, 0, 255, 255],
-        pickable=True,
-        auto_highlight=True,
-        get_width=5,
-        width_scale=5,
-        picking_radius=10,
-    )
+    if route:
+        routelayer = pdk.Layer(
+            "LineLayer",
+            data=route,
+            get_source_position=['start lon','start lat'][0],
+            get_target_position=['end lon','end lat'][0],
+            get_color=[0, 0, 255, 255],
+            pickable=True,
+            auto_highlight=True,
+            get_width=5,
+            width_scale=5,
+            picking_radius=10,
+        )
+    else: 
+        routeLayer= pdk.Layer()
     
     viewstate = pdk.ViewState(
         latitude=centerlat,
@@ -130,7 +132,7 @@ def displayStations(stations, route):
     )
     
     deck = pdk.Deck(
-        layers=[stationlayer, routelayer],
+        layers=[stationlayer,route]  ,
         initial_view_state=viewstate,
         map_style="mapbox://styles/mapbox/light-v9"
     )
@@ -171,7 +173,6 @@ def mostPopularRoute(trips,stations):
     return popular
 
 def displayTypePies(trips):
-    type_counts = trips.groupby('usertype').size().reset_index(name='count') 
     
     fig, axs= plt.subplots(3,1,figsize=(5,5))
 
@@ -249,8 +250,8 @@ def displayCommonHourHist(trips):
     plt.axvline(commonhour, color='black', linestyle='dashed', linewidth=2, label=f'Most Common Hour: {commonhour}')
     st.pyplot(plt.gcf())
     st.markdown('This histogram shows the distribution of Blue Bike use by hour of the day for subscribers. During the month of January, 2015, 5pm was the most common time for people to use Blue Bikes, with a close peak at 8am too. This likely suggests that people who subscribe to Blue Bikes are mostly commuters.')
-    
     plt.clf()
+    
     cus = df[df['usertype']=='Customer']
     plt.hist(cus['hour'],bins=24,color='#a05195',edgecolor='black',alpha=0.7)
     plt.title('Most Common Time for Bike Trips (One-Time Customers)')
@@ -261,7 +262,36 @@ def displayCommonHourHist(trips):
     plt.axvline(commonhour, color='black', linestyle='dashed', linewidth=2, label=f'Most Common Hour: {commonhour}')
     st.pyplot(plt.gcf())
     st.markdown('This histogram shows the distribution of Blue Bike use by hour of the day for subscribers. During the month of January, 2015, 8am was the most common time for people to use Blue Bikes. It\'s interesting that there were no customer trips at 11am at all in the data.')
+    plt.clf()
+   
+    df['date'] = pd.to_datetime(df['date'])
+    df['dayoftheweek'] = df['date'].dt.day_name()
+    df = df.sort_values(by=['hour'])
+
+    daysoftheweek = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+    st.subheader('Most Popular Days for Blue Bike Users')
+    day = st.selectbox('Select Day of the Week',sorted(daysoftheweek))
+    daybeforeindex = daysoftheweek.index(day) - 1
+    daybefore = daysoftheweek[daybeforeindex]
+
+    if day != daysoftheweek[-1]:
+        dayafterindex = daysoftheweek.index(day) + 1
+    else:
+        dayafterindex = 0
+
+    dayafter = daysoftheweek[dayafterindex]
+    df2 = df[df['dayoftheweek'].isin([daybefore,day,dayafter])]
+
+    plt.hist(df2['dayoftheweek'],bins=3,color='#003f5c',edgecolor='black',alpha=0.7)
+    plt.title('Most Common Day for Bike Trips')
+    plt.xlabel('Day of the Week')
+    plt.ylabel('Number of Bike Trips')
+    plt.xticks(range(3))
+    commonday = df2['dayoftheweek'].mode().values[0]
+    plt.axvline(commonday, color='black', linestyle='dashed', linewidth=2, label=f'Most Common Day: {commonday}')
+    plt.legend()
     
+    st.pyplot(plt.gcf())
     
 def main():
     stationdata,tripdata = loaddata(tripfile,stationfile)
