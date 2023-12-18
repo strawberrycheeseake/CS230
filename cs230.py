@@ -121,7 +121,7 @@ def displayStations(stations, route=None):
             width_scale=5,
             picking_radius=10,
         )
-    else: 
+    else:
         routeLayer= pdk.Layer()
     
     viewstate = pdk.ViewState(
@@ -274,7 +274,7 @@ def displayCommonHourHist(trips):
     daybeforeindex = daysoftheweek.index(day) - 1
     daybefore = daysoftheweek[daybeforeindex]
 
-    if day != daysoftheweek[-1]:
+    if day != daysoftheweek[6]:
         dayafterindex = daysoftheweek.index(day) + 1
     else:
         dayafterindex = 0
@@ -286,13 +286,14 @@ def displayCommonHourHist(trips):
     plt.title('Most Common Day for Bike Trips')
     plt.xlabel('Day of the Week')
     plt.ylabel('Number of Bike Trips')
-    plt.xticks(range(3))
     commonday = df2['dayoftheweek'].mode().values[0]
     plt.axvline(commonday, color='black', linestyle='dashed', linewidth=2, label=f'Most Common Day: {commonday}')
     plt.legend()
     
-    st.pyplot(plt.gcf())
     
+    st.pyplot(plt.gcf())
+    popularday = df['dayoftheweek'].mode().values[0]
+    st.markdown(f'The most popular day of the week for users to bike was {popularday}')
 def main():
     stationdata,tripdata = loaddata(tripfile,stationfile)
     tripdata = cleanTrips(tripdata)
